@@ -1,98 +1,43 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Solace: Event-Driven Medical Ingestion Pipeline
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+An asynchronous, high-concurrency pipeline designed to ingest, validate, and securely process Protected Health Information (PHI) payloads at scale. 
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Built with an event-driven architecture, this system decouples traffic reception from heavy cryptographic processing, ensuring the API remains highly available even during massive traffic spikes.
 
-## Description
+![Pipeline Architecture](./audit-ui/src/assets/audit-pipeline.png)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🌐 Live Deployments
 
-## Project setup
+This monorepo is fully deployed and operational in the cloud using a highly decoupled infrastructure stack.
 
-```bash
-$ npm install
-```
+* **Interactive Audit Dashboard:** [Insert your Netlify URL here]
+* **API Gatekeeper & Worker:** [Insert your Render URL here]
+* **Database (PostgreSQL):** Hosted on **Supabase** (via IPv4 Session Pooler)
+* **Message Broker (Redis):** Hosted on **Upstash**
 
-## Compile and run the project
+## 🏗️ System Architecture
 
-```bash
-# development
-$ npm run start
+The pipeline is broken down into four distinct operational phases:
 
-# watch mode
-$ npm run start:dev
+### 1. Traffic Control & Validation (Gatekeeper)
+A NestJS API acts as the primary ingress point. It immediately validates incoming webhooks, logs the initial `IngestionEvent` to PostgreSQL with a `PENDING` status, and offloads the heavy payload to a Redis queue. This allows the API to return a `202 Accepted` response in milliseconds, preventing connection timeouts during high-volume surges.
 
-# production mode
-$ npm run start:prod
-```
+### 2. The Message Broker (BullMQ / Redis)
+**Upstash Redis** acts as the shock absorber for the system. Webhooks are buffered in a BullMQ queue, allowing the system to absorb traffic spikes (e.g., 500 concurrent requests) without overwhelming the database or compute resources. 
 
-## Run tests
+### 3. Headless Background Processing
+A background worker process continuously polls the Redis queue, pulling jobs at a controlled concurrency limit (5 simultaneous connections). 
+* **Processing:** Simulates AES-256 cryptographic encryption of the PHI payload.
+* **Fault Tolerance:** Transient failures trigger an **Exponential Backoff** retry strategy.
+* **Dead Letter Queue (DLQ):** Fatal errors (e.g., corrupted file signatures) bypass the retry loop and are isolated into a DLQ to prevent queue blocking.
 
-```bash
-# unit tests
-$ npm run test
+### 4. Database Persistence & Lifecycle Management
+Metadata and event statuses are persisted in a **Supabase PostgreSQL** database. 
+* **Memory Optimization:** To operate strictly within a 256MB memory ceiling, the worker implements aggressive Day 2 operations. A cron job fires every 10 minutes to explicitly `DELETE` processed records and run a `VACUUM` command, instantly reclaiming dead tuple space and preventing index bloat.
 
-# e2e tests
-$ npm run test:e2e
+## 🚀 Tech Stack
 
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+* **Frontend:** React, TypeScript, Tailwind CSS
+* **Backend:** Node.js, NestJS, TypeORM
+* **Queueing:** BullMQ, Redis
+* **Infrastructure:** Render (Compute), Netlify (Static UI
