@@ -23,10 +23,24 @@ import { ProcessedRecord } from './entities/processed-record.entity';
     TypeOrmModule.forFeature([IngestionEvent, ProcessedRecord]),
     
     BullModule.forRoot({
-      connection: {
-        host: 'localhost',
-        port: 6379,
-      },
+      connection: (() => {
+        if (process.env.REDIS_URL) {
+          // Parse the production Upstash 'rediss://default:password@host:port' URL
+          const url = new URL(process.env.REDIS_URL);
+          return {
+            host: url.hostname,
+            port: parseInt(url.port || '6379'),
+            username: url.username || undefined,
+            password: url.password || undefined,
+            tls: {}, // Forces SSL/TLS which Upstash requires
+          };
+        }
+        // Fall back to clean, simple local connection object
+        return {
+          host: 'localhost',
+          port: 6379,
+        };
+      })(),
     }),
     BullModule.registerQueue({
       name: 'ingestionQueue',

@@ -27,13 +27,24 @@ import { ScheduleModule } from '@nestjs/schedule';
     TypeOrmModule.forFeature([IngestionEvent, ProcessedRecord]),
 
     BullModule.forRoot({
-      connection: {
-        // Leverages Render's environmental variables for Redis connections in staging/production
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        password: process.env.REDIS_PASSWORD || undefined,
-        tls: process.env.REDIS_URL ? {} : undefined, // Render Redis requires TLS/SSL encryption
-      },
+      connection: (() => {
+        if (process.env.REDIS_URL) {
+          // Parse the production Upstash 'rediss://default:password@host:port' URL
+          const url = new URL(process.env.REDIS_URL);
+          return {
+            host: url.hostname,
+            port: parseInt(url.port || '6379'),
+            username: url.username || undefined,
+            password: url.password || undefined,
+            tls: {}, // Forces SSL/TLS which Upstash requires
+          };
+        }
+        // Fall back to clean, simple local connection object
+        return {
+          host: 'localhost',
+          port: 6379,
+        };
+      })(),
     }),
     BullModule.registerQueue({
       name: 'ingestionQueue',
