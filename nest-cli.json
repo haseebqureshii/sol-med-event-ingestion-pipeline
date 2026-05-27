@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/sol-ingestion-pipeline/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/sol-ingestion-pipeline/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/sol-ingestion-pipeline",
+  "projects": {
+    "sol-ingestion-pipeline": {
+      "type": "application",
+      "root": "apps/sol-ingestion-pipeline",
+      "entryFile": "main",
+      "sourceRoot": "apps/sol-ingestion-pipeline/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/sol-ingestion-pipeline/tsconfig.app.json"
+      }
+    },
+    "worker": {
+      "type": "application",
+      "root": "apps/worker",
+      "entryFile": "main",
+      "sourceRoot": "apps/worker/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/worker/tsconfig.app.json"
+      }
+    }
+  }
+}
