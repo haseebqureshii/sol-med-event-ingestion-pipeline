@@ -4,7 +4,7 @@ An asynchronous, high-concurrency pipeline designed to ingest, validate, and sec
 
 Built with an event-driven architecture, this system decouples traffic reception from heavy cryptographic processing, ensuring the API remains highly available even during massive traffic spikes.
 
-![Pipeline Architecture](.apps/sol-ingestion-pipeline/src/assets/audit-pipeline.png)
+![Pipeline Architecture](apps/sol-ingestion-pipeline/src/assets/audit-pipeline.png)
 
 ## 🌐 Live Deployments
 
