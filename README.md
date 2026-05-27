@@ -4,14 +4,14 @@ An asynchronous, high-concurrency pipeline designed to ingest, validate, and sec
 
 Built with an event-driven architecture, this system decouples traffic reception from heavy cryptographic processing, ensuring the API remains highly available even during massive traffic spikes.
 
-![Pipeline Architecture](./audit-ui/src/assets/audit-pipeline.png)
+![Pipeline Architecture](.apps/sol-ingestion-pipeline/src/assets/audit-pipeline.png)
 
 ## 🌐 Live Deployments
 
 This monorepo is fully deployed and operational in the cloud using a highly decoupled infrastructure stack.
 
-* **Interactive Audit Dashboard:** [Insert your Netlify URL here]
-* **API Gatekeeper & Worker:** [Insert your Render URL here]
+* **Interactive Audit Dashboard:** (https://sol-event-ingestion-ui.netlify.app/)
+* **API Gatekeeper & Worker:** Render Web Service
 * **Database (PostgreSQL):** Hosted on **Supabase** (via IPv4 Session Pooler)
 * **Message Broker (Redis):** Hosted on **Upstash**
 
