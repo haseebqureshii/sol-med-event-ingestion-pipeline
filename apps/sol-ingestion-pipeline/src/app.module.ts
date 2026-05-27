@@ -6,18 +6,22 @@ import { AppService } from './app.service';
 import { IngestionEvent } from './entities/ingestion-event.entity';
 import { ProcessedRecord } from './entities/processed-record.entity';
 
+
+
 @Module({
   imports: [
     // 1. Database Connection Configuration
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5433,
-      username: 'solace_user',
-      password: 'supersecretpassword',
-      database: 'ingestion_db',
+      url: process.env.DATABASE_URL || undefined,
+      host: process.env.DATABASE_URL ? undefined : 'localhost',
+      port: process.env.DATABASE_URL ? undefined : 5433,
+      username: process.env.DATABASE_URL ? undefined : 'solace_user',
+      password: process.env.DATABASE_URL ? undefined : 'supersecretpassword',
+      database: process.env.DATABASE_URL ? undefined : 'ingestion_db',
       entities: [IngestionEvent, ProcessedRecord],
-      synchronize: true, // Auto-creates/updates tables in development
+      synchronize: true, 
+      ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false, // Supabase requires SSL
     }),
     // 2. Register entities to make repositories available in this module
     TypeOrmModule.forFeature([IngestionEvent, ProcessedRecord]),
@@ -25,7 +29,6 @@ import { ProcessedRecord } from './entities/processed-record.entity';
     BullModule.forRoot({
       connection: (() => {
         if (process.env.REDIS_URL) {
-          // Parse the production Upstash 'rediss://default:password@host:port' URL
           const url = new URL(process.env.REDIS_URL);
           return {
             host: url.hostname,
