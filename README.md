@@ -4,7 +4,7 @@ An asynchronous, high-concurrency pipeline designed to ingest, validate, and sec
 
 Built with an event-driven architecture, this system decouples traffic reception from heavy cryptographic processing, ensuring the API remains highly available even during massive traffic spikes.
 
-<img width="1536" height="1024" alt="sol-matching-engine-arch" src="https://github.com/user-attachments/assets/a9174d96-e7bf-4f43-b257-da57355ea897" />
+<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/8a87f2f5-2808-4eaa-bb4a-c0eedcc36887" />
 
 ## 🌐 Live Deployments
 
